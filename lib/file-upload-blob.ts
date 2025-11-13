@@ -164,30 +164,31 @@ export async function deleteImageFromBlob(imageUrl: string, thumbnailUrl?: strin
         const errorMsg = `Failed to delete main image: ${errorDetails.message}`;
         errors.push(errorMsg);
       
-      // Try without explicit token (let SDK use env var)
-      try {
-        console.log('Retrying delete without explicit token...');
-        await del(imageUrl);
-        console.log('✅ Successfully deleted blob (without explicit token):', imageUrl);
-        // If retry succeeds, clear the error
-        errors.pop();
-      } catch (retryError: any) {
-        const retryDetails = {
-          message: retryError?.message || String(retryError),
-          name: retryError?.name,
-          code: retryError?.code,
-          statusCode: retryError?.statusCode,
-        };
-        
-        // If blob doesn't exist (404), treat as success
-        if (retryDetails.statusCode === 404 || retryDetails.message?.includes('404') || retryDetails.message?.includes('not found')) {
-          console.log('✅ Blob already deleted or not found (404) on retry:', imageUrl);
-          // Clear the error
+        // Try without explicit token (let SDK use env var)
+        try {
+          console.log('Retrying delete without explicit token...');
+          await del(imageUrl);
+          console.log('✅ Successfully deleted blob (without explicit token):', imageUrl);
+          // If retry succeeds, clear the error
           errors.pop();
-        } else {
-          console.error('❌ Retry also failed:', JSON.stringify(retryDetails, null, 2));
-          const retryMsg = `Retry also failed: ${retryDetails.message}`;
-          errors.push(retryMsg);
+        } catch (retryError: any) {
+          const retryDetails = {
+            message: retryError?.message || String(retryError),
+            name: retryError?.name,
+            code: retryError?.code,
+            statusCode: retryError?.statusCode,
+          };
+          
+          // If blob doesn't exist (404), treat as success
+          if (retryDetails.statusCode === 404 || retryDetails.message?.includes('404') || retryDetails.message?.includes('not found')) {
+            console.log('✅ Blob already deleted or not found (404) on retry:', imageUrl);
+            // Clear the error
+            errors.pop();
+          } else {
+            console.error('❌ Retry also failed:', JSON.stringify(retryDetails, null, 2));
+            const retryMsg = `Retry also failed: ${retryDetails.message}`;
+            errors.push(retryMsg);
+          }
         }
       }
     }
