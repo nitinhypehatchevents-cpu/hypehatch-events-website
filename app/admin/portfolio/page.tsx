@@ -65,6 +65,28 @@ export default function AdminPortfolio() {
       const formDataToSend = formData as any;
       const file = formDataToSend.file;
 
+      // Client-side validation before upload
+      if (file) {
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          showToast(`Invalid file type: ${file.type}. Allowed: JPG, PNG, WebP`, "error");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Check file size (20MB limit)
+        const maxSize = 20 * 1024 * 1024; // 20MB
+        if (file.size > maxSize) {
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          showToast(`File too large: ${fileSizeMB}MB. Maximum size: 20MB`, "error");
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log("Uploading file:", { name: file.name, type: file.type, size: file.size, sizeMB: (file.size / (1024 * 1024)).toFixed(2) });
+      }
+
       let response;
       if (file) {
         // File upload
@@ -75,6 +97,7 @@ export default function AdminPortfolio() {
         if (formData.alt) uploadFormData.append("alt", formData.alt);
         uploadFormData.append("order", formData.order.toString());
 
+        console.log("Sending upload request...");
         response = await fetch("/api/portfolio", {
           method: "POST",
           headers: {
@@ -82,6 +105,7 @@ export default function AdminPortfolio() {
           },
           body: uploadFormData,
         });
+        console.log("Upload response status:", response.status);
       } else if (formData.src) {
         // Manual path entry (backward compatibility)
         response = await fetch("/api/portfolio", {
@@ -113,7 +137,7 @@ export default function AdminPortfolio() {
       } else {
         const data = await response.json().catch(() => ({ error: "Failed to parse error response" }));
         const errorMsg = data.error || data.details || `Failed to add image (Status: ${response.status})`;
-        console.error("Portfolio upload error:", { status: response.status, data });
+        console.error("Portfolio upload error:", { status: response.status, statusText: response.statusText, data });
         showToast(errorMsg, "error");
       }
     } catch (error: any) {
