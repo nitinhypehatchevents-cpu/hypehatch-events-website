@@ -50,8 +50,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Brand not found" }, { status: 404 });
     }
 
-    // Delete logo file if it exists in uploads folder
-    if (brand.logoUrl && brand.logoUrl.startsWith('/uploads/')) {
+    // Delete logo file (handles both blob URLs and local filesystem paths)
+    if (brand.logoUrl) {
       try {
         await deleteImage(brand.logoUrl, undefined, UPLOAD_DIR);
       } catch (deleteError) {

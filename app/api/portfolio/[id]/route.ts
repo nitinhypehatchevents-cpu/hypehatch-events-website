@@ -50,8 +50,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
 
-    // Delete image files if they exist in uploads folder
-    if (portfolioItem.imageUrl && portfolioItem.imageUrl.startsWith('/uploads/')) {
+    // Delete image files (handles both blob URLs and local filesystem paths)
+    if (portfolioItem.imageUrl) {
       try {
         await deleteImage(
           portfolioItem.imageUrl,

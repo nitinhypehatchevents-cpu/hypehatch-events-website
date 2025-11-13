@@ -27,7 +27,7 @@ export const DELETE = withAuth(async (
     return API_RESPONSES.NOT_FOUND("Image not found");
   }
 
-  // Delete image file (non-blocking for faster response)
+  // Delete image file (handles both blob URLs and local filesystem paths)
   deleteImage(heroImage.url, undefined, UPLOAD_DIR).catch((err) =>
     console.error("Error deleting image file:", err)
   );
