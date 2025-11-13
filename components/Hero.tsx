@@ -252,8 +252,8 @@ export default function Hero() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            filter: "blur(2px)", // Reduced from 8px to 2px for more image visibility
-            WebkitFilter: "blur(2px)",
+            filter: "blur(0.5px)", // Minimal blur for maximum image visibility
+            WebkitFilter: "blur(0.5px)",
             willChange: reducedMotion ? "auto" : "transform",
             transform: "translateZ(0)", // Force GPU acceleration
             backfaceVisibility: "hidden", // Better performance on mobile
@@ -265,7 +265,7 @@ export default function Hero() {
             className="absolute inset-0"
             style={{
               background: "linear-gradient(to bottom, #0D0D0D 0%, #1A1A1E 100%)",
-              opacity: 0.45, // Reduced from 0.75 to 0.45 for more image visibility
+              opacity: 0.25, // Minimal overlay for maximum image exposure
             }}
           />
         </div>
