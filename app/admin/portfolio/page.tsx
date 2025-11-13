@@ -122,6 +122,12 @@ export default function AdminPortfolio() {
         return;
       }
 
+      if (!response) {
+        showToast("No response from server. Please check your connection.", "error");
+        setIsSubmitting(false);
+        return;
+      }
+
       if (response.ok) {
         showToast("Image added successfully!", "success");
         setShowAddForm(false);
@@ -135,14 +141,38 @@ export default function AdminPortfolio() {
         });
         fetchImages();
       } else {
-        const data = await response.json().catch(() => ({ error: "Failed to parse error response" }));
-        const errorMsg = data.error || data.details || `Failed to add image (Status: ${response.status})`;
-        console.error("Portfolio upload error:", { status: response.status, statusText: response.statusText, data });
+        // Try to get error message from response
+        let errorMsg = `Upload failed (Status: ${response.status})`;
+        try {
+          const data = await response.json();
+          errorMsg = data.error || data.details || data.message || errorMsg;
+          console.error("Portfolio upload error:", { 
+            status: response.status, 
+            statusText: response.statusText, 
+            data 
+          });
+        } catch (parseError) {
+          // If JSON parsing fails, use status text
+          errorMsg = response.statusText || `Upload failed (Status: ${response.status})`;
+          console.error("Failed to parse error response:", parseError);
+        }
         showToast(errorMsg, "error");
       }
     } catch (error: any) {
       console.error("Error adding portfolio item:", error);
-      const errorMsg = error?.message || "Network error. Please check your connection and try again.";
+      // Show more detailed error message
+      let errorMsg = "An error occurred. Please try again.";
+      if (error?.message) {
+        errorMsg = error.message;
+      } else if (error?.toString) {
+        errorMsg = error.toString();
+      }
+      console.error("Full error details:", {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack,
+        error: error
+      });
       showToast(errorMsg, "error");
     } finally {
       setIsSubmitting(false);

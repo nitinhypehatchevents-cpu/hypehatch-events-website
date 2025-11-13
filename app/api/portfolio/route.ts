@@ -38,22 +38,13 @@ export async function GET(request: NextRequest) {
 // POST - Add new portfolio image (supports both file upload and manual path entry)
 export async function POST(request: NextRequest) {
   try {
-    // Check Basic Auth
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Basic ")) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Admin Area"' } }
-      );
-    }
-
-    // Verify admin authentication (supports both database and env vars)
+    // Verify admin authentication (supports both database and env var auth)
     const { verifyAdminAuth } = await import("@/lib/auth-helpers");
     const authResult = await verifyAdminAuth(request);
     if (!authResult.authenticated) {
       return NextResponse.json(
-        { error: authResult.error || "Invalid credentials" },
-        { status: 401 }
+        { error: authResult.error || "Unauthorized" },
+        { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Admin Area"' } }
       );
     }
 
@@ -172,6 +163,13 @@ export async function POST(request: NextRequest) {
     console.error("Error creating portfolio item:", error);
     const errorMessage = error?.message || "Failed to create portfolio item";
     const errorDetails = process.env.NODE_ENV === "development" ? error?.stack : undefined;
+    console.error("Full error details:", {
+      message: error?.message,
+      name: error?.name,
+      code: error?.code,
+      stack: error?.stack,
+      error: error
+    });
     return NextResponse.json(
       { 
         error: errorMessage,
