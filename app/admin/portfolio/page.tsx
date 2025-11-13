@@ -112,7 +112,9 @@ export default function AdminPortfolio() {
         fetchImages();
       } else {
         const data = await response.json();
-        showToast(data.error || "Failed to add image", "error");
+        const errorMsg = data.error || data.details || "Failed to add image";
+        console.error("Portfolio upload error:", data);
+        showToast(errorMsg, "error");
       }
     } catch (error) {
       console.error("Error adding portfolio item:", error);
@@ -400,6 +402,8 @@ export default function AdminPortfolio() {
                     if (response.ok) {
                       successCount++;
                     } else {
+                      const errorData = await response.json().catch(() => ({}));
+                      console.error(`Error uploading ${file.name}:`, errorData);
                       errorCount++;
                     }
                   } catch (error) {

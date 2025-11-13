@@ -168,10 +168,16 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(portfolioItem, { status: 201 });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating portfolio item:", error);
+    const errorMessage = error?.message || "Failed to create portfolio item";
+    const errorDetails = process.env.NODE_ENV === "development" ? error?.stack : undefined;
     return NextResponse.json(
-      { error: "Failed to create portfolio item" },
+      { 
+        error: errorMessage,
+        details: errorDetails,
+        type: error?.name || "UnknownError"
+      },
       { status: 500 }
     );
   }
