@@ -254,6 +254,10 @@ export default function Hero() {
             backgroundRepeat: "no-repeat",
             filter: "blur(8px)",
             WebkitFilter: "blur(8px)",
+            willChange: reducedMotion ? "auto" : "transform",
+            transform: "translateZ(0)", // Force GPU acceleration
+            backfaceVisibility: "hidden", // Better performance on mobile
+            WebkitBackfaceVisibility: "hidden",
           }}
         >
           {/* Dark gradient overlay */}
@@ -468,6 +472,24 @@ export default function Hero() {
 
         .animate-cinematic-pan-zoom {
           animation: cinematic-pan-zoom 10s ease-in-out infinite;
+          will-change: transform;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+        }
+
+        /* Ensure animation works on mobile */
+        @media (max-width: 768px) {
+          .animate-cinematic-pan-zoom {
+            animation: cinematic-pan-zoom 10s ease-in-out infinite;
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            -webkit-perspective: 1000;
+            perspective: 1000;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
