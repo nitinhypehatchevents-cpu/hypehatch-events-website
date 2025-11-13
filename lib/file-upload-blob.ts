@@ -94,14 +94,36 @@ export async function uploadImageToBlob(
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   
   if (!token) {
-    throw new Error('BLOB_READ_WRITE_TOKEN environment variable is not set. Please add it in Vercel project settings.');
+    const error = 'BLOB_READ_WRITE_TOKEN environment variable is not set. Please add it in Vercel project settings.';
+    console.error(error);
+    throw new Error(error);
   }
   
-  const blob = await put(path, processedBuffer, {
-    access: 'public',
+  console.log('Uploading to Vercel Blob:', {
+    path,
+    size: processedBuffer.length,
     contentType: file.type,
-    token, // Explicitly pass token
+    hasToken: !!token
   });
+
+  let blob;
+  try {
+    blob = await put(path, processedBuffer, {
+      access: 'public',
+      contentType: file.type,
+      token, // Explicitly pass token
+    });
+    console.log('Blob upload successful:', blob.url);
+  } catch (blobError: any) {
+    console.error('Vercel Blob upload failed:', {
+      message: blobError?.message,
+      name: blobError?.name,
+      code: blobError?.code,
+      statusCode: blobError?.statusCode,
+      stack: blobError?.stack
+    });
+    throw new Error(`Vercel Blob upload failed: ${blobError?.message || "Unknown error"}`);
+  }
 
   // Generate thumbnail if needed
   let thumbnailUrl: string | undefined;

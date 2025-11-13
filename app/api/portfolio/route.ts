@@ -107,33 +107,83 @@ export async function POST(request: NextRequest) {
       }
 
       // Upload image with thumbnail
-      const uploadResult = await uploadImage(
-        file,
-        join(process.cwd(), "public", "uploads"),
-        "portfolio",
-        {
-          generateThumbnail: true,
-          thumbnailWidth: 300,
-          thumbnailHeight: 300,
-          maxWidth: 1920,
-          maxHeight: 1080,
-        }
-      );
-
-      // Save to database
-      const portfolioItem = await prisma.portfolio.create({
-        data: {
-          title: validation.data.title,
-          src: uploadResult.originalUrl,
-          alt: validation.data.alt || "Portfolio image",
-          category: validation.data.category,
-          imageUrl: uploadResult.originalUrl,
-          thumbnailUrl: uploadResult.thumbnailUrl,
-          order: validation.data.order || 0,
-        },
+      console.log("Starting image upload...", {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        category: validation.data.category
       });
 
-      return NextResponse.json(portfolioItem, { status: 201 });
+      let uploadResult;
+      try {
+        uploadResult = await uploadImage(
+          file,
+          join(process.cwd(), "public", "uploads"),
+          "portfolio",
+          {
+            generateThumbnail: true,
+            thumbnailWidth: 300,
+            thumbnailHeight: 300,
+            maxWidth: 1920,
+            maxHeight: 1080,
+          }
+        );
+        console.log("Image upload successful:", {
+          originalUrl: uploadResult.originalUrl,
+          thumbnailUrl: uploadResult.thumbnailUrl
+        });
+      } catch (uploadError: any) {
+        console.error("Image upload failed:", {
+          error: uploadError?.message,
+          name: uploadError?.name,
+          stack: uploadError?.stack,
+          code: uploadError?.code
+        });
+        return NextResponse.json(
+          { 
+            error: `Image upload failed: ${uploadError?.message || "Unknown error"}`,
+            details: process.env.NODE_ENV === "development" ? uploadError?.stack : undefined
+          },
+          { status: 500 }
+        );
+      }
+
+      // Save to database
+      try {
+        const portfolioItem = await prisma.portfolio.create({
+          data: {
+            title: validation.data.title,
+            src: uploadResult.originalUrl,
+            alt: validation.data.alt || "Portfolio image",
+            category: validation.data.category,
+            imageUrl: uploadResult.originalUrl,
+            thumbnailUrl: uploadResult.thumbnailUrl,
+            order: validation.data.order || 0,
+          },
+        });
+        console.log("Portfolio item created successfully:", portfolioItem.id);
+        return NextResponse.json(portfolioItem, { status: 201 });
+      } catch (dbError: any) {
+        console.error("Database save failed:", {
+          error: dbError?.message,
+          name: dbError?.name,
+          code: dbError?.code
+        });
+        // Try to delete uploaded image if database save fails
+        try {
+          const { deleteImage } = await import("@/lib/file-upload");
+          await deleteImage(uploadResult.originalUrl, uploadResult.thumbnailUrl, join(process.cwd(), "public", "uploads"));
+        } catch (deleteError) {
+          console.error("Failed to cleanup uploaded image:", deleteError);
+        }
+        return NextResponse.json(
+          { 
+            error: `Failed to save to database: ${dbError?.message || "Unknown error"}`,
+            details: process.env.NODE_ENV === "development" ? dbError?.stack : undefined
+          },
+          { status: 500 }
+        );
+      }
     } else {
       // Handle JSON data (manual path entry - backward compatibility)
       const body = await request.json();
