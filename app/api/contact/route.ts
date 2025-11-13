@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyAdminAuth } from "@/lib/auth-helpers";
 import { z } from "zod";
 
 // Helper function to normalize URLs - adds https:// if missing
@@ -158,25 +159,13 @@ export async function GET(request: NextRequest) {
 // PUT - Update contact information
 export async function PUT(request: NextRequest) {
   try {
-    // Check Basic Auth
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Basic ")) {
+    // Verify authentication (supports both database and env var auth)
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.authenticated) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: authResult.error || "Unauthorized" },
         { status: 401, headers: { "WWW-Authenticate": 'Basic realm="Admin Area"' } }
       );
-    }
-
-    const credentials = Buffer.from(authHeader.slice(6), "base64")
-      .toString()
-      .split(":");
-    const [username, password] = credentials;
-
-    if (
-      username !== process.env.ADMIN_USER ||
-      password !== process.env.ADMIN_PASS
-    ) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     if (!prisma) {
