@@ -99,8 +99,6 @@ export default function ClientsTestimonials() {
   const displayBrands = brands;
 
   // Auto-scroll carousel (pauses when hovering)
-  const isHoveringRef = useRef(false);
-  
   useEffect(() => {
     if (!carouselRef.current || brands.length === 0 || prefersReducedMotion) return;
 
