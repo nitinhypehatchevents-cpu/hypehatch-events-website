@@ -77,9 +77,16 @@ export async function uploadImageToBlob(
 
   // Upload to Vercel Blob
   const path = subfolder ? `${subfolder}/${filename}` : filename;
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  
+  if (!token) {
+    throw new Error('BLOB_READ_WRITE_TOKEN environment variable is not set. Please add it in Vercel project settings.');
+  }
+  
   const blob = await put(path, processedBuffer, {
     access: 'public',
     contentType: file.type,
+    token, // Explicitly pass token
   });
 
   // Generate thumbnail if needed
@@ -95,9 +102,11 @@ export async function uploadImageToBlob(
         .toBuffer();
 
       const thumbPath = subfolder ? `${subfolder}/thumbnails/thumb-${filename}` : `thumbnails/thumb-${filename}`;
+      const token = process.env.BLOB_READ_WRITE_TOKEN;
       const thumbBlob = await put(thumbPath, thumbnailBuffer, {
         access: 'public',
         contentType: 'image/jpeg',
+        token, // Explicitly pass token
       });
       thumbnailUrl = thumbBlob.url;
     } catch (error) {
@@ -117,13 +126,15 @@ export async function uploadImageToBlob(
  */
 export async function deleteImageFromBlob(imageUrl: string, thumbnailUrl?: string): Promise<void> {
   try {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    
     // Extract blob URL and delete
     if (imageUrl.startsWith('http')) {
-      await del(imageUrl);
+      await del(imageUrl, { token });
     }
 
     if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
-      await del(thumbnailUrl);
+      await del(thumbnailUrl, { token });
     }
   } catch (error) {
     console.error('Error deleting image from blob:', error);
