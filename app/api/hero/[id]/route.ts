@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { deleteImage } from "@/lib/file-upload";
 import { join } from "path";
@@ -37,7 +37,13 @@ export const DELETE = withAuth(async (
     fileDeleteError = errorMsg;
     // On Vercel, blob deletion failure should prevent database deletion
     if (process.env.VERCEL === '1' || process.env.VERCEL_ENV) {
-      return API_RESPONSES.ERROR("Failed to delete image from storage", errorMsg);
+      return NextResponse.json(
+        { 
+          error: "Failed to delete image from storage",
+          details: errorMsg
+        },
+        { status: 500 }
+      );
     }
   }
 
