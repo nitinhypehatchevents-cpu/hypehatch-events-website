@@ -252,20 +252,20 @@ export default function Hero() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            filter: "blur(8px)",
-            WebkitFilter: "blur(8px)",
+            filter: "blur(2px)", // Reduced from 8px to 2px for more image visibility
+            WebkitFilter: "blur(2px)",
             willChange: reducedMotion ? "auto" : "transform",
             transform: "translateZ(0)", // Force GPU acceleration
             backfaceVisibility: "hidden", // Better performance on mobile
             WebkitBackfaceVisibility: "hidden",
           }}
         >
-          {/* Dark gradient overlay */}
+          {/* Dark gradient overlay - reduced opacity to expose images more */}
           <div
             className="absolute inset-0"
             style={{
               background: "linear-gradient(to bottom, #0D0D0D 0%, #1A1A1E 100%)",
-              opacity: 0.75,
+              opacity: 0.45, // Reduced from 0.75 to 0.45 for more image visibility
             }}
           />
         </div>
