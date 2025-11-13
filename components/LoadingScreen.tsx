@@ -353,7 +353,9 @@ export default function LoadingScreen() {
               />
             ))}
           </div>
-    </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
