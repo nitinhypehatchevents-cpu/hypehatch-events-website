@@ -175,6 +175,7 @@ export default function AdminPortfolio() {
 
       let successCount = 0;
       let errorCount = 0;
+      const errorMessages: string[] = [];
 
       for (const id of selectedImages) {
         try {
@@ -189,11 +190,15 @@ export default function AdminPortfolio() {
             successCount++;
           } else {
             const errorData = await response.json().catch(() => ({}));
+            const errorMsg = errorData.error || errorData.details || `Failed to delete image ${id}`;
             console.error(`Error deleting image ${id}:`, errorData);
+            errorMessages.push(errorMsg);
             errorCount++;
           }
-        } catch (error) {
+        } catch (error: any) {
+          const errorMsg = error?.message || `Error deleting image ${id}`;
           console.error(`Error deleting image ${id}:`, error);
+          errorMessages.push(errorMsg);
           errorCount++;
         }
       }
@@ -206,7 +211,11 @@ export default function AdminPortfolio() {
         setSelectedImages(new Set());
         fetchImages();
       } else {
-        showToast("Failed to delete images", "error");
+        // Show the first error message, or a generic one if no errors were captured
+        const errorMsg = errorMessages.length > 0 
+          ? errorMessages[0] 
+          : "Failed to delete images";
+        showToast(errorMsg, "error");
       }
     } catch (error) {
       console.error("Error in bulk delete:", error);
