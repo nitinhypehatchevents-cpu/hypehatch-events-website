@@ -252,8 +252,8 @@ export default function Hero() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            filter: "blur(0.5px)", // Minimal blur for maximum image visibility
-            WebkitFilter: "blur(0.5px)",
+            filter: "blur(1.5px)", // Subtle blur for cinematic effect while keeping images visible
+            WebkitFilter: "blur(1.5px)",
             willChange: reducedMotion ? "auto" : "transform",
             transform: "translateZ(0)", // Force GPU acceleration
             backfaceVisibility: "hidden", // Better performance on mobile
