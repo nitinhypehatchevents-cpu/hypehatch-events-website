@@ -128,37 +128,54 @@ export async function deleteImageFromBlob(imageUrl: string, thumbnailUrl?: strin
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   
   if (!token) {
-    console.error('BLOB_READ_WRITE_TOKEN not found. Cannot delete from blob storage.');
-    throw new Error('BLOB_READ_WRITE_TOKEN environment variable is not set');
+    const error = 'BLOB_READ_WRITE_TOKEN environment variable is not set';
+    console.error(error);
+    throw new Error(error);
   }
   
-  try {
-    // Delete main image if it's a blob URL
-    if (imageUrl && imageUrl.startsWith('http')) {
+  const errors: string[] = [];
+  
+  // Delete main image if it's a blob URL
+  if (imageUrl && imageUrl.startsWith('http')) {
+    try {
+      // Try with explicit token first
+      await del(imageUrl, { token });
+      console.log('Successfully deleted blob:', imageUrl);
+    } catch (error: any) {
+      const errorMsg = `Failed to delete main image: ${error?.message || error}`;
+      console.error('Error deleting main image from blob:', errorMsg);
+      errors.push(errorMsg);
+      // Try without explicit token (let SDK use env var)
       try {
-        await del(imageUrl, { token });
-        console.log('Successfully deleted blob:', imageUrl);
-      } catch (error: any) {
-        console.error('Error deleting main image from blob:', error?.message || error);
-        // Continue to try thumbnail even if main image deletion fails
+        await del(imageUrl);
+        console.log('Successfully deleted blob (without explicit token):', imageUrl);
+      } catch (retryError: any) {
+        const retryMsg = `Retry also failed: ${retryError?.message || retryError}`;
+        console.error(retryMsg);
+        errors.push(retryMsg);
       }
-    } else {
-      console.warn('Image URL is not a blob URL (does not start with http):', imageUrl);
     }
+  } else if (imageUrl) {
+    const warning = `Image URL is not a blob URL (does not start with http): ${imageUrl}`;
+    console.warn(warning);
+    errors.push(warning);
+  }
 
-    // Delete thumbnail if it's a blob URL
-    if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
-      try {
-        await del(thumbnailUrl, { token });
-        console.log('Successfully deleted thumbnail blob:', thumbnailUrl);
-      } catch (error: any) {
-        console.error('Error deleting thumbnail from blob:', error?.message || error);
-        // Don't throw - thumbnail deletion failure is not critical
-      }
+  // Delete thumbnail if it's a blob URL
+  if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
+    try {
+      await del(thumbnailUrl, { token });
+      console.log('Successfully deleted thumbnail blob:', thumbnailUrl);
+    } catch (error: any) {
+      const errorMsg = `Failed to delete thumbnail: ${error?.message || error}`;
+      console.error('Error deleting thumbnail from blob:', errorMsg);
+      // Don't add to errors array - thumbnail deletion failure is not critical
     }
-  } catch (error: any) {
-    console.error('Error in deleteImageFromBlob:', error?.message || error);
-    throw error; // Re-throw so caller knows deletion failed
+  }
+  
+  // If main image deletion failed, throw error
+  if (errors.length > 0 && errors.some(e => e.includes('Failed to delete main image'))) {
+    throw new Error(errors.join('; '));
   }
 }
 
