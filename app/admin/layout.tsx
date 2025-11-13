@@ -21,28 +21,28 @@ export default function AdminLayout({
       const auth = sessionStorage.getItem("admin_auth");
       setIsAuthenticated(auth === "true");
       
-      // If not authenticated and not on login page, redirect
-      if (auth !== "true" && pathname && pathname !== "/admin/login") {
+      // If not authenticated and not on login/setup page, redirect
+      if (auth !== "true" && pathname && pathname !== "/admin/login" && pathname !== "/admin/setup") {
         router.replace("/admin/login");
       }
     } catch (error) {
       console.error("Auth check error:", error);
       setIsAuthenticated(false);
-      if (pathname && pathname !== "/admin/login") {
+      if (pathname && pathname !== "/admin/login" && pathname !== "/admin/setup") {
         router.replace("/admin/login");
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // If not authenticated and not on login page, show nothing (will redirect)
-  if (!isAuthenticated && pathname !== "/admin/login") {
+  // If not authenticated and not on login/setup page, show nothing (will redirect)
+  if (!isAuthenticated && pathname !== "/admin/login" && pathname !== "/admin/setup") {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {pathname !== "/admin/login" && (
+      {pathname !== "/admin/login" && pathname !== "/admin/setup" && (
         <nav className="bg-white shadow-lg border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
