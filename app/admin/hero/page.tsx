@@ -46,8 +46,9 @@ export default function AdminHero() {
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      showToast("File size exceeds 20MB limit.", "error");
+    if (file.size > 4 * 1024 * 1024) { // 4MB limit
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      showToast(`File too large: ${fileSizeMB}MB. Maximum size: 4MB (due to server limits). Please compress the image.`, "error");
       return;
     }
 
