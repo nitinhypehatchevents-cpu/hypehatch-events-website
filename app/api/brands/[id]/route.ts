@@ -51,12 +51,24 @@ export async function DELETE(
     }
 
     // Delete logo file (handles both blob URLs and local filesystem paths)
+    let fileDeleteError: string | null = null;
     if (brand.logoUrl) {
       try {
         await deleteImage(brand.logoUrl, undefined, UPLOAD_DIR);
-      } catch (deleteError) {
-        console.error("Error deleting logo file:", deleteError);
-        // Continue with database deletion even if file deletion fails
+      } catch (deleteError: any) {
+        const errorMsg = deleteError?.message || String(deleteError);
+        console.error("Error deleting logo file:", errorMsg);
+        fileDeleteError = errorMsg;
+        // On Vercel, blob deletion failure should prevent database deletion
+        if (process.env.VERCEL === '1' || process.env.VERCEL_ENV) {
+          return NextResponse.json(
+            { 
+              error: "Failed to delete logo from storage",
+              details: errorMsg
+            },
+            { status: 500 }
+          );
+        }
       }
     }
 
@@ -64,6 +76,10 @@ export async function DELETE(
     await prisma.brand.delete({
       where: { id },
     });
+
+    if (fileDeleteError && !process.env.VERCEL) {
+      console.warn("Database record deleted but file deletion failed:", fileDeleteError);
+    }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

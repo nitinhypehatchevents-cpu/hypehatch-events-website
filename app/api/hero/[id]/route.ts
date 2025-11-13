@@ -28,12 +28,25 @@ export const DELETE = withAuth(async (
   }
 
   // Delete image file (handles both blob URLs and local filesystem paths)
-  deleteImage(heroImage.url, undefined, UPLOAD_DIR).catch((err) =>
-    console.error("Error deleting image file:", err)
-  );
+  let fileDeleteError: string | null = null;
+  try {
+    await deleteImage(heroImage.url, undefined, UPLOAD_DIR);
+  } catch (deleteError: any) {
+    const errorMsg = deleteError?.message || String(deleteError);
+    console.error("Error deleting image file:", errorMsg);
+    fileDeleteError = errorMsg;
+    // On Vercel, blob deletion failure should prevent database deletion
+    if (process.env.VERCEL === '1' || process.env.VERCEL_ENV) {
+      return API_RESPONSES.ERROR("Failed to delete image from storage", errorMsg);
+    }
+  }
 
   // Delete from database
   await prisma!.heroImage.delete({ where: { id: imageId } });
+
+  if (fileDeleteError && !process.env.VERCEL) {
+    console.warn("Database record deleted but file deletion failed:", fileDeleteError);
+  }
 
   return API_RESPONSES.SUCCESS({ success: true });
 });
