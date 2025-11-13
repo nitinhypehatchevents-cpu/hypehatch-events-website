@@ -113,18 +113,21 @@ export async function uploadImage(
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  // Process image with Sharp (resize if needed, preserve quality and format)
+  // Process image with Sharp - strip EXIF orientation to prevent auto-rotation, resize if needed, preserve quality
   let processedBuffer = buffer;
   try {
     const image = sharp(buffer);
     const metadata = await image.metadata();
     const originalFormat = metadata.format; // jpeg, png, webp
 
+    // Strip EXIF orientation data by setting orientation to 1 (normal) - prevents browser auto-rotation
+    let processedImage = image.withMetadata({ orientation: 1 });
+
     // Resize if image is larger than max dimensions
     if (metadata.width && metadata.height) {
       if (metadata.width > opts.maxWidth || metadata.height > opts.maxHeight) {
         // Resize but preserve original format and high quality
-        let resized = image.resize(opts.maxWidth, opts.maxHeight, {
+        let resized = processedImage.resize(opts.maxWidth, opts.maxHeight, {
           fit: 'inside',
           withoutEnlargement: true,
         });
@@ -141,17 +144,23 @@ export async function uploadImage(
       } else {
         // Image is within size limits - optimize without resizing, preserve format
         if (originalFormat === 'png') {
-          processedBuffer = Buffer.from(await image.png({ quality: 100, compressionLevel: 6 }).toBuffer());
+          processedBuffer = Buffer.from(await processedImage.png({ quality: 100, compressionLevel: 6 }).toBuffer());
         } else if (originalFormat === 'webp') {
-          processedBuffer = Buffer.from(await image.webp({ quality: 95 }).toBuffer());
+          processedBuffer = Buffer.from(await processedImage.webp({ quality: 95 }).toBuffer());
         } else {
           // JPEG - optimize with high quality
-          processedBuffer = Buffer.from(await image.jpeg({ quality: 95, mozjpeg: true }).toBuffer());
+          processedBuffer = Buffer.from(await processedImage.jpeg({ quality: 95, mozjpeg: true }).toBuffer());
         }
       }
     } else {
-      // No dimensions available, use original
-      processedBuffer = buffer;
+      // No dimensions available - strip EXIF and preserve original
+      if (originalFormat === 'png') {
+        processedBuffer = Buffer.from(await processedImage.png({ quality: 100, compressionLevel: 6 }).toBuffer());
+      } else if (originalFormat === 'webp') {
+        processedBuffer = Buffer.from(await processedImage.webp({ quality: 95 }).toBuffer());
+      } else {
+        processedBuffer = Buffer.from(await processedImage.jpeg({ quality: 95, mozjpeg: true }).toBuffer());
+      }
     }
   } catch (error) {
     console.error("Sharp processing error, using original buffer:", error);
@@ -171,6 +180,7 @@ export async function uploadImage(
           const thumbnailPath = join(thumbnailDir, thumbnailFilename);
 
           const thumbnailBuffer = await sharp(buffer)
+            .withMetadata({ orientation: 1 }) // Strip EXIF orientation to prevent auto-rotation
             .resize(opts.thumbnailWidth, opts.thumbnailHeight, {
               fit: 'cover',
               position: 'center',
