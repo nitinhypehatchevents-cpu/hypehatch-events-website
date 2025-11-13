@@ -37,21 +37,22 @@ export async function uploadImageToBlob(
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  // Process image with Sharp
+  // Process image with Sharp - scale to fit without rotation, preserve quality
   let processedBuffer = buffer;
   try {
     const image = sharp(buffer);
     const metadata = await image.metadata();
     const originalFormat = metadata.format;
 
-    // Resize if needed
+    // Resize if needed - scale to fit max dimensions without rotation
     if (metadata.width && metadata.height) {
       if (metadata.width > opts.maxWidth || metadata.height > opts.maxHeight) {
         let resized = image.resize(opts.maxWidth, opts.maxHeight, {
-          fit: 'inside',
-          withoutEnlargement: true,
+          fit: 'inside', // Scale to fit within dimensions, maintain aspect ratio
+          withoutEnlargement: true, // Don't enlarge smaller images
         });
 
+        // Preserve original format with high quality
         if (originalFormat === 'png') {
           processedBuffer = Buffer.from(await resized.png({ quality: 100, compressionLevel: 6 }).toBuffer());
         } else if (originalFormat === 'webp') {
@@ -60,7 +61,7 @@ export async function uploadImageToBlob(
           processedBuffer = Buffer.from(await resized.jpeg({ quality: 95, mozjpeg: true }).toBuffer());
         }
       } else {
-        // Optimize without resizing
+        // Image is within size limits - optimize without resizing, preserve format and quality
         if (originalFormat === 'png') {
           processedBuffer = Buffer.from(await image.png({ quality: 100, compressionLevel: 6 }).toBuffer());
         } else if (originalFormat === 'webp') {
@@ -68,6 +69,15 @@ export async function uploadImageToBlob(
         } else {
           processedBuffer = Buffer.from(await image.jpeg({ quality: 95, mozjpeg: true }).toBuffer());
         }
+      }
+    } else {
+      // No dimensions available - preserve original with high quality
+      if (originalFormat === 'png') {
+        processedBuffer = Buffer.from(await image.png({ quality: 100, compressionLevel: 6 }).toBuffer());
+      } else if (originalFormat === 'webp') {
+        processedBuffer = Buffer.from(await image.webp({ quality: 95 }).toBuffer());
+      } else {
+        processedBuffer = Buffer.from(await image.jpeg({ quality: 95, mozjpeg: true }).toBuffer());
       }
     }
   } catch (error) {
@@ -95,7 +105,7 @@ export async function uploadImageToBlob(
     try {
       const thumbnailBuffer = await sharp(buffer)
         .resize(opts.thumbnailWidth, opts.thumbnailHeight, {
-          fit: 'cover',
+          fit: 'cover', // Scale to cover thumbnail area, maintain aspect ratio
           position: 'center',
         })
         .jpeg({ quality: 80, mozjpeg: true })
