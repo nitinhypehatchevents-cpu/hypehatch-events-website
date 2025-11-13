@@ -23,6 +23,7 @@ export default function ClientsTestimonials() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const carouselRef = useRef<HTMLDivElement>(null);
   const isManualScrollingRef = useRef(false);
+  const isHoveringRef = useRef(false);
   const [brands, setBrands] = useState<Client[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
