@@ -1,0 +1,7 @@
+Hypehatch Events Website
+Version: 1.0.0
+Build Date: 2024-11-XX
+Commit Hash: b91656e5108682d1805aa31fbd656c0b1b490f66
+Deployment: Production Ready
+
+

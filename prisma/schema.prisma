@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gallery {
+  id           String   @id @default(cuid())
+  title        String
+  category     String
+  imageUrl     String
+  thumbnailUrl String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([category])
+}
+
+model HeroImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Portfolio {
+  id        String   @id @default(cuid())
+  title     String?  // Optional title
+  src       String   // Image path
+  alt       String   @default("Portfolio image")
+  category  String   // "events" or "activations"
+  imageUrl  String?  // Full URL for uploaded images
+  thumbnailUrl String? // Thumbnail URL
+  width     Int      @default(800)
+  height    Int      @default(600)
+  order     Int      @default(0) // For custom ordering
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([order])
+  @@index([createdAt])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String   // Logo image path
+  logoUrl   String?  // Full URL for uploaded logos
+  website   String?  // Optional website URL
+  order     Int      @default(0) // For custom ordering
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+  @@index([isActive])
+}
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  quote       String   // The testimonial text
+  author      String   // Person's name
+  clientName  String?  // Alternative: client name
+  designation String?  // Person's role/title
+  role        String?  // Person's role/title (alias)
+  company     String?  // Company name
+  message     String?  // Alternative: message
+  avatar      String?  // Optional avatar image path
+  rating      Int?     // Optional rating (1-5)
+  isActive    Boolean  @default(true)
+  order       Int      @default(0) // For custom ordering
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+  @@index([createdAt])
+}
+
+model CompanyInfo {
+  id            String   @id @default(cuid())
+  phone         String?  // Phone number
+  email         String?  // Email address
+  address       String?  // Physical address (deprecated - use addresses)
+  addresses     String?  // JSON array of physical addresses
+  website       String?  // Website URL
+  facebook      String?  // Facebook URL
+  instagram     String?  // Instagram URL
+  linkedin      String?  // LinkedIn URL
+  twitter       String?  // Twitter/X URL
+  youtube       String?  // YouTube URL
+  whatsapp      String?  // WhatsApp number/URL
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([id])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([isRead])
+  @@index([email])
+}
+
+model AdminUser {
+  id                String   @id @default(cuid())
+  username          String   @unique
+  passwordHash      String
+  lastPasswordChange DateTime @default(now())
+  failedLoginAttempts Int     @default(0)
+  lockedUntil       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([username])
+}
+
+
