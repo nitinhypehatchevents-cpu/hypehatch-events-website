@@ -44,7 +44,10 @@ export default function Home() {
     url: siteUrl,
     logo: `${siteUrl}/logo.svg`,
     sameAs: [
-      // Add social media URLs when available
+      // Add your social media URLs here for better SEO
+      // Example: "https://www.facebook.com/hypehatchevents",
+      // Example: "https://www.instagram.com/hypehatchevents",
+      // Example: "https://www.linkedin.com/company/hypehatchevents",
     ],
     contactPoint: {
       "@type": "ContactPoint",

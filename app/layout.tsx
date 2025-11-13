@@ -91,8 +91,11 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Add Google Search Console verification when available
-    // google: "verification-token",
+    // Add Google Search Console verification token here after setup
+    // google: "your-google-verification-token",
+  },
+  alternates: {
+    canonical: siteUrl,
   },
 };
 

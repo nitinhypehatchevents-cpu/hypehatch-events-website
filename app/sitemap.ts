@@ -6,19 +6,17 @@ const siteUrl =
   "https://hypehatchevents.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = siteUrl;
+  const now = new Date();
+
   return [
     {
-      url: siteUrl,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 1,
-    },
-    {
-      url: `${siteUrl}/admin/gallery`,
-      lastModified: new Date(),
+      url: baseUrl,
+      lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.5,
+      priority: 1.0,
     },
+    // Note: Admin routes are excluded as they're in robots.txt disallow
   ];
 }
 
