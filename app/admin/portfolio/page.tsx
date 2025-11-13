@@ -145,7 +145,10 @@ export default function AdminPortfolio() {
         fetchImages();
         setSelectedImages(new Set());
       } else {
-        showToast("Failed to delete image", "error");
+        const data = await response.json().catch(() => ({}));
+        const errorMsg = data.error || data.details || "Failed to delete image";
+        console.error("Delete error:", data);
+        showToast(errorMsg, "error");
       }
     } catch (error) {
       console.error("Error deleting portfolio item:", error);
@@ -185,6 +188,8 @@ export default function AdminPortfolio() {
           if (response.ok) {
             successCount++;
           } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.error(`Error deleting image ${id}:`, errorData);
             errorCount++;
           }
         } catch (error) {
