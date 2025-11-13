@@ -53,14 +53,18 @@ export async function DELETE(
     // Delete image files (handles both blob URLs and local filesystem paths)
     if (portfolioItem.imageUrl) {
       try {
+        console.log('Attempting to delete image:', portfolioItem.imageUrl);
+        console.log('Thumbnail URL:', portfolioItem.thumbnailUrl);
         await deleteImage(
           portfolioItem.imageUrl,
           portfolioItem.thumbnailUrl || undefined,
           UPLOAD_DIR
         );
-      } catch (deleteError) {
-        console.error("Error deleting image file:", deleteError);
+        console.log('Image file deleted successfully');
+      } catch (deleteError: any) {
+        console.error("Error deleting image file:", deleteError?.message || deleteError);
         // Continue with database deletion even if file deletion fails
+        // But log the error for debugging
       }
     }
 
@@ -70,10 +74,14 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting portfolio item:", error);
+    const errorMessage = error?.message || "Failed to delete portfolio item";
     return NextResponse.json(
-      { error: "Failed to delete portfolio item" },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }

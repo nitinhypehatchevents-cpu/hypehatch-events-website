@@ -125,20 +125,40 @@ export async function uploadImageToBlob(
  * Deletes image from Vercel Blob Storage
  */
 export async function deleteImageFromBlob(imageUrl: string, thumbnailUrl?: string): Promise<void> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  
+  if (!token) {
+    console.error('BLOB_READ_WRITE_TOKEN not found. Cannot delete from blob storage.');
+    throw new Error('BLOB_READ_WRITE_TOKEN environment variable is not set');
+  }
+  
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    
-    // Extract blob URL and delete
-    if (imageUrl.startsWith('http')) {
-      await del(imageUrl, { token });
+    // Delete main image if it's a blob URL
+    if (imageUrl && imageUrl.startsWith('http')) {
+      try {
+        await del(imageUrl, { token });
+        console.log('Successfully deleted blob:', imageUrl);
+      } catch (error: any) {
+        console.error('Error deleting main image from blob:', error?.message || error);
+        // Continue to try thumbnail even if main image deletion fails
+      }
+    } else {
+      console.warn('Image URL is not a blob URL (does not start with http):', imageUrl);
     }
 
+    // Delete thumbnail if it's a blob URL
     if (thumbnailUrl && thumbnailUrl.startsWith('http')) {
-      await del(thumbnailUrl, { token });
+      try {
+        await del(thumbnailUrl, { token });
+        console.log('Successfully deleted thumbnail blob:', thumbnailUrl);
+      } catch (error: any) {
+        console.error('Error deleting thumbnail from blob:', error?.message || error);
+        // Don't throw - thumbnail deletion failure is not critical
+      }
     }
-  } catch (error) {
-    console.error('Error deleting image from blob:', error);
-    // Don't throw - deletion failures shouldn't break the flow
+  } catch (error: any) {
+    console.error('Error in deleteImageFromBlob:', error?.message || error);
+    throw error; // Re-throw so caller knows deletion failed
   }
 }
 
