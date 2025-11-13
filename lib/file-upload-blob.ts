@@ -129,6 +129,7 @@ export async function uploadImageToBlob(
   let thumbnailUrl: string | undefined;
   if (opts.generateThumbnail) {
     try {
+      console.log('Generating thumbnail...');
       const thumbnailBuffer = await sharp(buffer)
         .rotate() // Apply EXIF rotation to pixels, then remove EXIF tag to prevent browser auto-rotation
         .resize(opts.thumbnailWidth, opts.thumbnailHeight, {
@@ -139,15 +140,22 @@ export async function uploadImageToBlob(
         .toBuffer();
 
       const thumbPath = subfolder ? `${subfolder}/thumbnails/thumb-${filename}` : `thumbnails/thumb-${filename}`;
-      const token = process.env.BLOB_READ_WRITE_TOKEN;
+      console.log('Uploading thumbnail to Vercel Blob:', thumbPath);
       const thumbBlob = await put(thumbPath, thumbnailBuffer, {
         access: 'public',
         contentType: 'image/jpeg',
-        token, // Explicitly pass token
+        token, // Use same token
       });
       thumbnailUrl = thumbBlob.url;
-    } catch (error) {
-      console.error("Thumbnail generation error:", error);
+      console.log('Thumbnail upload successful:', thumbnailUrl);
+    } catch (error: any) {
+      console.error("Thumbnail generation/upload error:", {
+        message: error?.message,
+        name: error?.name,
+        code: error?.code,
+        stack: error?.stack
+      });
+      // Don't throw - thumbnail is optional
     }
   }
 
