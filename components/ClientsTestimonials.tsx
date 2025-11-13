@@ -98,6 +98,8 @@ export default function ClientsTestimonials() {
   const displayBrands = brands;
 
   // Auto-scroll carousel (pauses when hovering)
+  const isHoveringRef = useRef(false);
+  
   useEffect(() => {
     if (!carouselRef.current || brands.length === 0 || prefersReducedMotion) return;
 
@@ -108,7 +110,7 @@ export default function ClientsTestimonials() {
       if (scrollInterval) return; // Already running
       
       scrollInterval = setInterval(() => {
-        if (!carousel || isManualScrollingRef.current) return;
+        if (!carousel || isHoveringRef.current) return; // Pause when hovering
         
         const maxScroll = carousel.scrollWidth - carousel.clientWidth;
         const currentScroll = carousel.scrollLeft;
@@ -117,8 +119,8 @@ export default function ClientsTestimonials() {
         if (currentScroll >= maxScroll - 10) {
           carousel.scrollTo({ left: 0, behavior: "smooth" });
         } else {
-          // Scroll forward smoothly
-          carousel.scrollBy({ left: 0.5, behavior: "auto" });
+          // Scroll forward smoothly - increased speed (2.5 pixels per frame = ~150 pixels/second)
+          carousel.scrollBy({ left: 2.5, behavior: "auto" });
         }
       }, 16); // ~60fps smooth scroll
     };
@@ -133,18 +135,8 @@ export default function ClientsTestimonials() {
     // Start auto-scroll
     startAutoScroll();
 
-    // Pause/resume based on manual scrolling flag
-    const checkInterval = setInterval(() => {
-      if (isManualScrollingRef.current) {
-        stopAutoScroll();
-      } else if (!scrollInterval) {
-        startAutoScroll();
-      }
-    }, 100);
-
     return () => {
       stopAutoScroll();
-      clearInterval(checkInterval);
     };
   }, [brands.length, prefersReducedMotion]);
 
@@ -193,10 +185,12 @@ export default function ClientsTestimonials() {
   };
 
   const handleMouseEnter = () => {
+    isHoveringRef.current = true; // Pause auto-scroll when hovering
     isManualScrollingRef.current = true;
   };
 
   const handleMouseLeave = () => {
+    isHoveringRef.current = false; // Resume auto-scroll when leaving
     isManualScrollingRef.current = false;
     if (mouseMoveRef.current) {
       cancelAnimationFrame(mouseMoveRef.current);
