@@ -3,6 +3,9 @@ import { writeFile, mkdir, unlink } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
+// Check if we're on Vercel (production)
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+
 export interface UploadResult {
   originalUrl: string;
   thumbnailUrl?: string;
@@ -67,6 +70,7 @@ function generateFilename(originalName: string): string {
 
 /**
  * Processes and uploads an image file with optional thumbnail generation
+ * Uses Vercel Blob on Vercel, filesystem locally
  */
 export async function uploadImage(
   file: File,
@@ -74,6 +78,13 @@ export async function uploadImage(
   subfolder: string = '',
   options: UploadOptions = {}
 ): Promise<UploadResult> {
+  // Use Vercel Blob on Vercel
+  if (isVercel) {
+    const { uploadImageToBlob } = await import('./file-upload-blob');
+    return uploadImageToBlob(file, subfolder, options);
+  }
+
+  // Use filesystem locally
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   // Validate file
@@ -191,12 +202,20 @@ export async function uploadImage(
 
 /**
  * Deletes an image file and its thumbnail
+ * Uses Vercel Blob on Vercel, filesystem locally
  */
 export async function deleteImage(
   imageUrl: string,
   thumbnailUrl: string | undefined,
   uploadDir: string
 ): Promise<void> {
+  // Use Vercel Blob on Vercel
+  if (isVercel) {
+    const { deleteImageFromBlob } = await import('./file-upload-blob');
+    return deleteImageFromBlob(imageUrl, thumbnailUrl);
+  }
+
+  // Use filesystem locally
   try {
     // Extract filename from URL (handles both /uploads/hero/filename.jpg and just filename.jpg)
     const urlParts = imageUrl.split('/');
