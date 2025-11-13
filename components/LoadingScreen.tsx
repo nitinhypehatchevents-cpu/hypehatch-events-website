@@ -23,10 +23,10 @@ export default function LoadingScreen() {
       return;
     }
     
-    // Ultra-fast: Maximum 200ms, then force close
+    // Force close after maximum 500ms (increased from 200ms for reliability)
     const maxTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 200);
+    }, 500);
 
     const completeLoading = () => {
       clearTimeout(maxTimeout);
@@ -36,8 +36,11 @@ export default function LoadingScreen() {
     // Check if already loaded
     if (typeof document !== 'undefined') {
       if (document.readyState === "complete" || document.readyState === "interactive") {
+        // Already loaded, close immediately
         completeLoading();
+        return;
       } else {
+        // Wait for load events
         document.addEventListener("DOMContentLoaded", completeLoading, { once: true });
         if (typeof window !== 'undefined') {
           window.addEventListener("load", completeLoading, { once: true });
@@ -45,8 +48,14 @@ export default function LoadingScreen() {
       }
     }
 
+    // Additional safety: Force close after 1 second regardless
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
     return () => {
       clearTimeout(maxTimeout);
+      clearTimeout(safetyTimeout);
       if (typeof document !== 'undefined') {
         document.removeEventListener("DOMContentLoaded", completeLoading);
       }
@@ -54,7 +63,7 @@ export default function LoadingScreen() {
         window.removeEventListener("load", completeLoading);
       }
     };
-  }, [isAdminRoute]);
+  }, [isAdminRoute, pathname]);
 
   // Don't show on admin routes or if already loaded
   if (isAdminRoute || !isLoading) return null;
@@ -65,13 +74,21 @@ export default function LoadingScreen() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#1A1A1E] via-[#1A1A1E] to-[#0F0F12] flex items-center justify-center overflow-hidden"
-      style={{ willChange: "opacity" }}
-    >
+    <AnimatePresence mode="wait">
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#1A1A1E] via-[#1A1A1E] to-[#0F0F12] flex items-center justify-center overflow-hidden"
+          style={{ willChange: "opacity" }}
+          onAnimationComplete={() => {
+            // Ensure state is updated after animation
+            if (isLoading) {
+              setIsLoading(false);
+            }
+          }}
+        >
           {/* Simplified Background - Less DOM elements */}
           <div className="absolute inset-0 opacity-10">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
