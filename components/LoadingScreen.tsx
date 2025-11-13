@@ -73,22 +73,18 @@ export default function LoadingScreen() {
     return null;
   }
 
+  if (!isLoading) return null;
+
   return (
     <AnimatePresence mode="wait">
-      {isLoading && (
-        <motion.div
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
-          className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#1A1A1E] via-[#1A1A1E] to-[#0F0F12] flex items-center justify-center overflow-hidden"
-          style={{ willChange: "opacity" }}
-          onAnimationComplete={() => {
-            // Ensure state is updated after animation
-            if (isLoading) {
-              setIsLoading(false);
-            }
-          }}
-        >
+      <motion.div
+        key="loading-screen"
+        initial={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+        className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#1A1A1E] via-[#1A1A1E] to-[#0F0F12] flex items-center justify-center overflow-hidden"
+        style={{ willChange: "opacity" }}
+      >
           {/* Simplified Background - Less DOM elements */}
           <div className="absolute inset-0 opacity-10">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -354,7 +350,6 @@ export default function LoadingScreen() {
             ))}
           </div>
         </motion.div>
-      )}
     </AnimatePresence>
   );
 }
