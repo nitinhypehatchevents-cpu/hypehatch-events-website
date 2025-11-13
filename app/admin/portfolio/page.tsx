@@ -111,14 +111,15 @@ export default function AdminPortfolio() {
         });
         fetchImages();
       } else {
-        const data = await response.json();
-        const errorMsg = data.error || data.details || "Failed to add image";
-        console.error("Portfolio upload error:", data);
+        const data = await response.json().catch(() => ({ error: "Failed to parse error response" }));
+        const errorMsg = data.error || data.details || `Failed to add image (Status: ${response.status})`;
+        console.error("Portfolio upload error:", { status: response.status, data });
         showToast(errorMsg, "error");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding portfolio item:", error);
-      showToast("An error occurred. Please try again.", "error");
+      const errorMsg = error?.message || "Network error. Please check your connection and try again.";
+      showToast(errorMsg, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -417,11 +418,15 @@ export default function AdminPortfolio() {
                       successCount++;
                     } else {
                       const errorData = await response.json().catch(() => ({}));
-                      console.error(`Error uploading ${file.name}:`, errorData);
+                      const errorMsg = errorData.error || errorData.details || `Failed to upload ${file.name} (Status: ${response.status})`;
+                      console.error(`Error uploading ${file.name}:`, { status: response.status, error: errorData });
+                      errorMessages.push(`${file.name}: ${errorMsg}`);
                       errorCount++;
                     }
-                  } catch (error) {
+                  } catch (error: any) {
+                    const errorMsg = error?.message || `Network error uploading ${file.name}`;
                     console.error(`Error uploading ${file.name}:`, error);
+                    errorMessages.push(`${file.name}: ${errorMsg}`);
                     errorCount++;
                   }
 
@@ -436,7 +441,11 @@ export default function AdminPortfolio() {
                   setShowBulkUpload(false);
                   fetchImages();
                 } else {
-                  showToast("Failed to upload images. Please try again.", "error");
+                  // Show first error message or generic message
+                  const errorMsg = errorMessages.length > 0 
+                    ? errorMessages[0] 
+                    : "Failed to upload images. Please check file size (max 20MB) and format (JPG, PNG, WebP).";
+                  showToast(errorMsg, "error");
                 }
               } catch (error) {
                 console.error("Error in bulk upload:", error);
