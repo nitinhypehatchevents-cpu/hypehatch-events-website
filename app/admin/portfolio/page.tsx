@@ -384,6 +384,7 @@ export default function AdminPortfolio() {
 
                 let successCount = 0;
                 let errorCount = 0;
+                const errorMessages: string[] = [];
 
                 // Upload files one by one to show progress
                 for (let i = 0; i < files.length; i++) {
