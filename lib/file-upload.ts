@@ -120,8 +120,9 @@ export async function uploadImage(
     const metadata = await image.metadata();
     const originalFormat = metadata.format; // jpeg, png, webp
 
-    // Strip EXIF orientation data by setting orientation to 1 (normal) - prevents browser auto-rotation
-    let processedImage = image.withMetadata({ orientation: 1 });
+    // Apply EXIF orientation to pixel data and remove EXIF tag - prevents browser auto-rotation
+    // This physically rotates the image pixels if needed, then removes EXIF so browser won't rotate again
+    let processedImage = image.rotate(); // Auto-applies EXIF rotation to pixels, then removes EXIF tag
 
     // Resize if image is larger than max dimensions
     if (metadata.width && metadata.height) {
@@ -180,7 +181,7 @@ export async function uploadImage(
           const thumbnailPath = join(thumbnailDir, thumbnailFilename);
 
           const thumbnailBuffer = await sharp(buffer)
-            .withMetadata({ orientation: 1 }) // Strip EXIF orientation to prevent auto-rotation
+            .rotate() // Apply EXIF rotation to pixels, then remove EXIF tag to prevent browser auto-rotation
             .resize(opts.thumbnailWidth, opts.thumbnailHeight, {
               fit: 'cover',
               position: 'center',
