@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validate file (20MB limit)
+      // Validate file (4MB limit - Vercel serverless function request body limit is 4.5MB)
       const fileValidation = validateFile(file, {
-        maxSize: 20 * 1024 * 1024, // 20MB
+        maxSize: 4 * 1024 * 1024, // 4MB
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
       });
 

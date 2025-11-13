@@ -75,11 +75,11 @@ export default function AdminPortfolio() {
           return;
         }
 
-        // Check file size (20MB limit)
-        const maxSize = 20 * 1024 * 1024; // 20MB
+        // Check file size (4MB limit - Vercel serverless function request body limit is 4.5MB)
+        const maxSize = 4 * 1024 * 1024; // 4MB
         if (file.size > maxSize) {
           const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-          showToast(`File too large: ${fileSizeMB}MB. Maximum size: 20MB`, "error");
+          showToast(`File too large: ${fileSizeMB}MB. Maximum size: 4MB (due to server limits). Please compress the image.`, "error");
           setIsSubmitting(false);
           return;
         }
@@ -450,8 +450,9 @@ export default function AdminPortfolio() {
                     continue;
                   }
 
-                  if (file.size > 20 * 1024 * 1024) {
+                  if (file.size > 4 * 1024 * 1024) { // 4MB limit
                     errorCount++;
+                    errorMessages.push(`${file.name}: File too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum: 4MB`);
                     continue;
                   }
 
@@ -499,7 +500,7 @@ export default function AdminPortfolio() {
                   // Show first error message or generic message
                   const errorMsg = errorMessages.length > 0 
                     ? errorMessages[0] 
-                    : "Failed to upload images. Please check file size (max 20MB) and format (JPG, PNG, WebP).";
+                    : "Failed to upload images. Please check file size (max 4MB) and format (JPG, PNG, WebP).";
                   showToast(errorMsg, "error");
                 }
               } catch (error) {
@@ -530,7 +531,7 @@ export default function AdminPortfolio() {
                   className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Select multiple images at once. JPG, PNG, or WebP. Max 20MB per image. High quality preserved.
+                  Select multiple images at once. JPG, PNG, or WebP. Max 4MB per image (due to server limits). High quality preserved.
                 </p>
               </div>
               <div>
@@ -624,7 +625,7 @@ export default function AdminPortfolio() {
                   }}
                   className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FA9616] focus:border-transparent"
                 />
-                <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP. Max 20MB. High quality preserved. Thumbnail will be generated automatically.</p>
+                <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP. Max 4MB (due to server limits). High quality preserved. Thumbnail will be generated automatically.</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">

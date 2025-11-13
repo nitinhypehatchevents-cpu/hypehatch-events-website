@@ -17,7 +17,7 @@ export async function uploadImageToBlob(
   }
 
   const opts = {
-    maxSize: 20 * 1024 * 1024,
+    maxSize: 4 * 1024 * 1024, // 4MB (Vercel serverless function limit is 4.5MB for request body)
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     generateThumbnail: true,
     thumbnailWidth: 300,
