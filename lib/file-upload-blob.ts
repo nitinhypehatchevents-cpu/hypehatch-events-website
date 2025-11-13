@@ -107,6 +107,7 @@ export async function uploadImageToBlob(
   if (opts.generateThumbnail) {
     try {
       const thumbnailBuffer = await sharp(buffer)
+        .withMetadata({ orientation: 1 }) // Strip EXIF orientation to prevent auto-rotation
         .resize(opts.thumbnailWidth, opts.thumbnailHeight, {
           fit: 'cover', // Scale to cover thumbnail area, maintain aspect ratio
           position: 'center',
