@@ -20,7 +20,7 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
 
   const bgColor = {
     success: "bg-green-50 border-green-200 text-green-800",
-    error: "bg-red-50 border-red-200 text-red-800",
+    error: "bg-red-50 border-red-400 text-red-900",
     info: "bg-blue-50 border-blue-200 text-blue-800",
   }[type];
 
@@ -30,12 +30,17 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
     info: "ℹ️",
   }[type];
 
+  // Special styling for error messages - darker red/maroon
+  const errorStyle = type === "error" 
+    ? "bg-red-50 border-red-500 text-red-900 font-semibold" 
+    : "";
+
   return (
     <div
-      className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg border-2 ${bgColor} flex items-center space-x-3 animate-slide-in`}
+      className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg border-2 ${bgColor} ${errorStyle} flex items-center space-x-3 animate-slide-in`}
     >
-      <span className="text-xl">{icon}</span>
-      <span className="font-medium">{message}</span>
+      <span className={`text-xl ${type === "error" ? "text-red-700" : ""}`}>{icon}</span>
+      <span className={`font-medium ${type === "error" ? "text-red-900" : ""}`}>{message}</span>
       <button
         onClick={onClose}
         className="ml-4 text-gray-500 hover:text-gray-700"
