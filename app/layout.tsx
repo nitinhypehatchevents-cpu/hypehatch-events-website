@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
+import ScrollRestoration from "@/components/ScrollRestoration";
 import LoadingScreen from "@/components/LoadingScreen";
 
 const poppins = Poppins({
@@ -116,6 +117,7 @@ export default function RootLayout({
         }} />
       </head>
       <body className="font-body antialiased bg-gray-50 text-ink">
+        <ScrollRestoration />
         <LoadingScreen />
         <a href="#main-content" className="skip-link">
           Skip to main content
