@@ -6,13 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoadingScreen() {
   const [isLoading, setIsLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
   // Don't show loading screen on admin routes
   const isAdminRoute = pathname?.startsWith('/admin');
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     if (typeof window === 'undefined') {
       setIsLoading(false);
       return;
@@ -22,69 +28,65 @@ export default function LoadingScreen() {
       setIsLoading(false);
       return;
     }
-    
-    // Force close after maximum 500ms (increased from 200ms for reliability)
-    const maxTimeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
 
-    const completeLoading = () => {
-      clearTimeout(maxTimeout);
-      setIsLoading(false);
-    };
-
-    // Check if already loaded
-    if (typeof document !== 'undefined') {
-      if (document.readyState === "complete" || document.readyState === "interactive") {
-        // Already loaded, close immediately
-        completeLoading();
-        return;
-      } else {
-        // Wait for load events
-        document.addEventListener("DOMContentLoaded", completeLoading, { once: true });
-        if (typeof window !== 'undefined') {
-          window.addEventListener("load", completeLoading, { once: true });
-        }
-      }
+    // Immediate check - if page is already loaded, close immediately
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+      return () => clearTimeout(timer);
     }
 
-    // Additional safety: Force close after 1 second regardless
-    const safetyTimeout = setTimeout(() => {
+    // Function to close loading screen
+    const closeLoading = () => {
       setIsLoading(false);
-    }, 1000);
+    };
+
+    // Listen for DOM ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", closeLoading, { once: true });
+    } else {
+      // Already interactive or complete
+      closeLoading();
+    }
+
+    // Listen for window load
+    window.addEventListener("load", closeLoading, { once: true });
+
+    // CRITICAL: Force close after 800ms maximum - prevents getting stuck
+    const forceClose = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
 
     return () => {
-      clearTimeout(maxTimeout);
-      clearTimeout(safetyTimeout);
-      if (typeof document !== 'undefined') {
-        document.removeEventListener("DOMContentLoaded", completeLoading);
-      }
-      if (typeof window !== 'undefined') {
-        window.removeEventListener("load", completeLoading);
-      }
+      clearTimeout(forceClose);
+      document.removeEventListener("DOMContentLoaded", closeLoading);
+      window.removeEventListener("load", closeLoading);
     };
-  }, [isAdminRoute, pathname]);
+  }, [mounted, isAdminRoute, pathname]);
 
-  // Don't show on admin routes or if already loaded
-  if (isAdminRoute || !isLoading) return null;
+  // Don't show on admin routes
+  if (isAdminRoute || !mounted) return null;
   
-  // Skip loading screen if page is already interactive
-  if (typeof window !== 'undefined' && document.readyState === 'complete') {
-    return null;
-  }
-
+  // Don't show if already closed
   if (!isLoading) return null;
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
-        key="loading-screen"
-        initial={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#1A1A1E] via-[#1A1A1E] to-[#0F0F12] flex items-center justify-center overflow-hidden"
-        style={{ willChange: "opacity" }}
-      >
+      {isLoading && (
+        <motion.div
+          key="loading-screen"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          onAnimationComplete={() => {
+            // Ensure state is updated after animation
+            setIsLoading(false);
+          }}
+          className="fixed inset-0 z-[9999] bg-gradient-to-br from-[#1A1A1E] via-[#1A1A1E] to-[#0F0F12] flex items-center justify-center overflow-hidden"
+          style={{ willChange: "opacity", pointerEvents: isLoading ? "auto" : "none" }}
+        >
           {/* Simplified Background - Less DOM elements */}
           <div className="absolute inset-0 opacity-10">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -306,8 +308,8 @@ export default function LoadingScreen() {
               <motion.div
                 className="h-full bg-gradient-to-r from-[#FA9616] to-[#FFB84D] rounded-full"
                 initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
               />
             </div>
 
@@ -350,6 +352,7 @@ export default function LoadingScreen() {
             ))}
           </div>
         </motion.div>
+      )}
     </AnimatePresence>
   );
 }

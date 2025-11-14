@@ -204,3 +204,4 @@ Modern hosting platforms like Vercel provide:
 
 **Ready to deploy without cPanel?** Follow [DEPLOY_NOW.md](./DEPLOY_NOW.md) - it's much simpler! ✨
 
+

@@ -109,43 +109,110 @@ export default function Hero() {
   }, [isClient, reducedMotion]);
 
   const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const maxRetries = 3;
 
-  // Fetch hero images from API (non-blocking, with timeout)
+  // Fetch hero images from API with retry mechanism
   useEffect(() => {
     if (!isClient) return;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+    // Preload images to ensure they're ready
+    const preloadImages = (urls: string[]): Promise<void> => {
+      return new Promise((resolve) => {
+        if (urls.length === 0) {
+          resolve();
+          return;
+        }
 
-    const fetchHeroImages = async () => {
+        let loadedCount = 0;
+        const totalImages = urls.length;
+
+        urls.forEach((url) => {
+          const img = new Image();
+          img.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalImages) {
+              setImagesLoaded(true);
+              resolve();
+            }
+          };
+          img.onerror = () => {
+            loadedCount++;
+            // Continue even if some images fail
+            if (loadedCount === totalImages) {
+              setImagesLoaded(true);
+              resolve();
+            }
+          };
+          img.src = url;
+        });
+      });
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout (increased)
+
+    const fetchHeroImages = async (attempt: number = 0): Promise<void> => {
       try {
         const response = await fetch("/api/hero", { 
           signal: controller.signal,
-          cache: 'force-cache', // Cache for faster loads
+          cache: 'no-store', // Always fetch fresh data
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
         });
-        if (!response.ok) throw new Error('Failed to fetch');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
-        if (data.images && data.images.length > 0) {
-          const urls = data.images.map((img: { url: string }) => img.url);
-          setHeroImages(urls);
+        
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+          const urls = data.images.map((img: { url: string }) => img.url).filter(Boolean);
+          
+          if (urls.length > 0) {
+            // Preload images before setting state
+            await preloadImages(urls);
+            setHeroImages(urls);
+          } else {
+            setHeroImages([]);
+            setImagesLoaded(true);
+          }
         } else {
           setHeroImages([]);
+          setImagesLoaded(true);
         }
       } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.warn("Hero images fetch timeout");
+        } else {
           console.error("Error fetching hero images:", error);
         }
-        setHeroImages([]);
+        
+        // Retry logic
+        if (attempt < maxRetries) {
+          const delay = (attempt + 1) * 1000; // Exponential backoff: 1s, 2s, 3s
+          console.log(`Retrying hero images fetch (attempt ${attempt + 1}/${maxRetries}) in ${delay}ms...`);
+          
+          setTimeout(() => {
+            fetchHeroImages(attempt + 1);
+          }, delay);
+        } else {
+          // Max retries reached, show empty state
+          console.warn("Max retries reached for hero images. Showing empty state.");
+          setHeroImages([]);
+          setImagesLoaded(true);
+        }
       } finally {
         clearTimeout(timeoutId);
       }
     };
 
-    // Delay fetch slightly to not block initial render
-    const fetchTimeout = setTimeout(fetchHeroImages, 100);
+    // Start fetching immediately
+    fetchHeroImages(0);
     
     return () => {
-      clearTimeout(fetchTimeout);
       clearTimeout(timeoutId);
       controller.abort();
     };
@@ -242,7 +309,7 @@ export default function Hero() {
       aria-label="Hero section"
     >
       {/* Cinematic Blurred Background with Pan/Zoom */}
-      {images.length > 0 ? (
+      {images.length > 0 && imagesLoaded ? (
         <div
           className={`absolute inset-0 z-0 transition-opacity duration-1000 ${
             reducedMotion ? "" : "animate-cinematic-pan-zoom"
@@ -258,6 +325,7 @@ export default function Hero() {
             transform: "translateZ(0)", // Force GPU acceleration
             backfaceVisibility: "hidden", // Better performance on mobile
             WebkitBackfaceVisibility: "hidden",
+            opacity: imagesLoaded ? 1 : 0,
           }}
         >
           {/* Dark gradient overlay - reduced opacity to expose images more */}
